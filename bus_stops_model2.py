@@ -7,16 +7,23 @@ Created on Thu Mar 30 20:34:15 2023
 
 import numpy as np
 import numpy.random as rand
+import csv
+import matplotlib.pyplot as plt
+import time
 
-max_speed = 5  # m s ^ -1
-bus_density = 0.12 # busses per site
-road_length = 50  # metres / number of sites
+start = time.time()
+
+
+max_speed = 5  # metres per second
+#bus_density = 0.15 # busses per metre
+road_length = 2000  # metres
 prob_of_deceleration = 0.3
-seconds = 50 # seconds
+seconds = 5000 # seconds
 influx = True
-influx_bus = 0.5 # busses per second
-max_cap_bus = 10
-influx_passengers = 0.2
+#influx_bus = 0.5 # busses per second
+max_cap_bus = 40
+influx_passengers = 0.05 # per second
+stop_frequency = 0.005 # stops per metre
 
 def translate_road(road, locs, stops, stop_caps):
     final_road = ['.' for i in range(len(road))]
@@ -38,7 +45,7 @@ def tuple_to_list(locs):
         locs_list.append(i[1])
     return locs_list
 
-def influx_gen(road, locs_bus, bus_caps, stop_caps, stops, passengers):
+def influx_gen(road, locs_bus, bus_caps, stop_caps, stops, passengers, influx_bus):
     vehicle_locs = tuple_to_list(locs_bus)
     sample = rand.uniform(0,1, size=100)
     val = rand.choice(sample)
@@ -78,7 +85,7 @@ def generating_simple_road(rho_bus):
             m += 1
     bus_indices.sort()
     first_stop = rand.choice(range(2,int(np.floor(road_length*0.1))))
-    n_stops = int(np.floor(road_length*0.08))
+    n_stops = int(np.floor(road_length*stop_frequency))
     stop_density = n_stops / road_length
     for k in range(n_stops):
         stops.append(first_stop + int(np.floor(k / stop_density)))
@@ -150,10 +157,12 @@ def decel_stops(road, bus, stops):
     return road
 
 def find_next_stop(location, stops):
-    stops.append(location)
-    stops.sort()
+    dummy = []
+    dummy.extend(stops)
+    dummy.append(location)
+    dummy.sort()
     n = 0
-    for val in stops:
+    for val in dummy:
         if val == location:
             index = n
         else:
@@ -290,12 +299,14 @@ def bus_flow(road, locs):
 
 def iterate_road(tot_time, rho_bus):
     t = 0
+    flow = 0
     road, locs, bus_caps, stops, stop_caps = generating_simple_road(rho_bus)
-    passengers = [(0,0) for i in range(len(locs)) ]
+    passengers = [(0,0) for i in range(len(locs))]
     passengers = new_pass_calc(road, locs, bus_caps, stops, stop_caps, passengers)
     while t < tot_time:
         road, bus_caps, stop_caps, passengers = new_process(road, locs, stops, bus_caps, stop_caps, passengers)
         passengers = adjust_buses(locs, stops, bus_caps, stop_caps, passengers)
+        """
         print(passengers)
         for b_cap in enumerate(bus_caps):
             index = b_cap[0]
@@ -303,11 +314,46 @@ def iterate_road(tot_time, rho_bus):
             print("bus {0} occupancy = {1}".format(index+1, cap))
         translate_road(road, locs, stops, stop_caps)
         print("\n")
+        """
         road, locs, bus_caps, passengers = moving_bus(road, locs, bus_caps, passengers)
         passengers = process_pass_stop(road, locs, stops, bus_caps, stop_caps, passengers)
         if influx:
-            road, locs, bus_caps, passengers = influx_gen(road, locs, bus_caps, stop_caps, stops, passengers)
+            road, locs, bus_caps, passengers = influx_gen(road, locs, bus_caps, stop_caps, stops, passengers, rho_bus)
             stop_caps = generate_passengers(stop_caps)
+        flow += bus_flow(road, locs)
         t += 1
+    return flow/t
 
-iterate_road(seconds, bus_density)
+def write_flows(time):
+    densities = rand.uniform(low=0.01, high=0.5, size=10)
+    flow_rates = []
+    for rho in densities:
+        flow_rate = iterate_road(time, rho)
+        flow_rates.append(flow_rate)
+        with open("flow_rate_buses_1.csv", 'a', encoding='utf-8') as data:
+            writer = csv.writer(data)
+            writer.writerow([rho, flow_rate])
+
+def plot_flows():
+    data = np.genfromtxt("flow_rate_buses_1.csv", dtype='float',
+                         delimiter=',', skip_header=1)
+    densities = data[:, 0]
+    flow_rates = data[:, 1]
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111)
+    ax.set_title('Traffic Flow for buses with stops', fontsize=22)
+    ax.set_xlabel('Average density (buses per site)', fontsize=18)
+    ax.set_ylabel('Average Flow rate (buses per time step)', fontsize=18)
+    plt.xticks(np.arange(0, 0.6, step=0.1),fontsize=16)
+    plt.ylim(0,0.4)
+    plt.yticks(np.arange(0,0.4,step=0.05),fontsize=16)
+    plt.grid()
+    plt.scatter(densities, flow_rates, s=3, c='black', alpha=1)
+    plt.show()
+    plt.savefig("Flow_graph_buses_1.pdf", dpi=400)
+
+write_flows(seconds)
+plot_flows()
+
+end = time.time()
+print((end - start)/60)
