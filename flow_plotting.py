@@ -145,6 +145,7 @@ def plot_flows():
     plt.xticks(np.arange(0, 1.1, step=0.1), fontsize=14)
     plt.yticks(fontsize=14)
     plt.scatter(densities, flow_rates, color='black', s=1)
+
     plt.grid()
     plt.show()
     plt.savefig("Flow_graph_single_lane_final.pdf", dpi=400)

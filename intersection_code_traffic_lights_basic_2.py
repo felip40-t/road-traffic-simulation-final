@@ -19,7 +19,7 @@ length_1 = 1000 # metres / number of sites
 length_2 = 1000
 prob_of_deceleration = 0.3
 #influx = 0.3 # cars / second
-seconds = 5000  # seconds
+seconds = 10000  # seconds
 int_index_1 = 500
 int_index_2 = 500
 interval = 6 # seconds
@@ -190,9 +190,11 @@ def iterate_roads(tot_time, density, interval):
     time = 1
     red_light_1 = True
     flow = 0
-    dens = 0
+    dens = []
     # repeating whole process for certain amount of iterations
     while time < tot_time:
+        if len(locs_1) == 0 and len(locs_2) == 0:
+            break
         red_light_2 = not red_light_1
         road_1, choices_1 = accel_decel(road_1, locs_1, locs_2, int_index_1, int_index_2, red_light_1)
         road_2, choices_2 = accel_decel(road_2, locs_2, locs_1, int_index_2, int_index_1, red_light_2)
@@ -206,26 +208,37 @@ def iterate_roads(tot_time, density, interval):
         """
         if red_light_1:
             road_1, locs_1, road_2, locs_2, choices_2 = moving_cars(road_1, locs_1, road_2, locs_2, choices_1, choices_2, int_index_1, int_index_2)
-            road_1, locs_1 = influx_gen(road_1, locs_1, density)
+            #road_1, locs_1 = influx_gen(road_1, locs_1, density)
             road_2, locs_2, road_1, locs_1, choices_1 = moving_cars(road_2, locs_2, road_1, locs_1, choices_2, choices_1, int_index_2, int_index_1)
-            road_2, locs_2 = influx_gen(road_2, locs_2, density)
+            #road_2, locs_2 = influx_gen(road_2, locs_2, density)
         if red_light_2:
             road_2, locs_2, road_1, locs_1, choices_1 = moving_cars(road_2, locs_2, road_1, locs_1, choices_2, choices_1, int_index_2, int_index_1)
-            road_2, locs_2 = influx_gen(road_2, locs_2, density)
+            #road_2, locs_2 = influx_gen(road_2, locs_2, density)
             road_1, locs_1, road_2, locs_2, choices_2 = moving_cars(road_1, locs_1, road_2, locs_2, choices_1, choices_2, int_index_1, int_index_2)
-            road_1, locs_1 = influx_gen(road_1, locs_1, density)
-        flow += car_flow(road_1, locs_1, length_1)
+            #road_1, locs_1 = influx_gen(road_1, locs_1, density)
+
         if time % interval == 0:
             red_light_1 = not red_light_1
-        dens += len(locs_1) / len(road_1)
+
+        test_road = road_1[:int_index_1]
+        test_locs = []
+        for loc in locs_1:
+            if loc < int_index_1:
+                test_locs.append(loc)
+
+        #flow += car_flow(test_road, test_locs, len(test_road))
+        dens.append(len(locs_1) / len(road_1))
         time += 1
-    return flow / time, dens / time
+    times = list(range(1,time))
+    return times, dens
 
 def write_flows(time):
     densities = rand.uniform(low=0.01, high=1, size=10)
     flow_rates = []
     avg_densities = []
     for rho in (densities):
+        for inter in range(1,11):
+            y, x = iterate_roads(seconds, 0.3, interval)
         flow_rate, avg_density = iterate_roads(time, rho, 6)
         flow_rates.append(flow_rate)
         avg_densities.append(avg_density)
@@ -234,24 +247,29 @@ def write_flows(time):
             writer.writerow([avg_density, flow_rate])
 
 def plot_flows():
-    data = np.genfromtxt("flow_rate_intersection_4.csv", dtype='float',
-                         delimiter=',', skip_header=1)
-    time = data[:, 0]
-    densities = data[:, 1]
+    #data = np.genfromtxt("flow_rate_intersection_4.csv", dtype='float',
+     #                    delimiter=',', skip_header=1)
+    #time = data[:, 0]
+    #densities = data[:, 1]
+    #times = list(range(1,seconds))
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
-    ax.set_title('Traffic Flow for intersection', fontsize=22)
+    ax.set_title('Densities for one of the roads at an intersection', fontsize=18)
     ax.set_xlabel('Time (seconds)', fontsize=18)
     ax.set_ylabel('Density of cars (cars per site)', fontsize=18)
-    plt.xticks(np.arange(0, 1, step=0.1),fontsize=16)
-    plt.ylim(0,0.35)
-    plt.yticks(np.arange(0,0.35,step=0.05),fontsize=16)
+    plt.xticks(fontsize=16)
+    #plt.ylim(0.15,0.35)
+    plt.yticks(fontsize=16)
     plt.grid()
-    plt.scatter(densities, flow_rates, s=2, c='black', alpha=1)
+    colours = ['red', 'blue', 'black', 'green', 'orange', 'yellow', 'purple', 'cyan', 'magenta', 'dodgerblue']
+    for inter in range(11,21):
+        x, y = iterate_roads(seconds, 0.3, inter)
+        plt.scatter(x, y, s=1, c=colours[inter-11], alpha=1, label=inter)
+    plt.legend(loc='best', title='interval times for traffic lights (sec)', markerscale=4)
     plt.show()
-    plt.savefig("Flow_graph_intersection_int_8.pdf", dpi=400)
+    plt.savefig("intersection_test7.pdf", dpi=400)
 
-write_flows(seconds)
+#write_flows(seconds)
 plot_flows()
 
 end = time.time()

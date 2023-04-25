@@ -214,9 +214,10 @@ def iterate_roads(tot_time, density, interval):
             road_2, locs_2 = influx_gen(road_2, locs_2, density)
             road_1, locs_1, road_2, locs_2, choices_2 = moving_cars(road_1, locs_1, road_2, locs_2, choices_1, choices_2, int_index_1, int_index_2)
             road_1, locs_1 = influx_gen(road_1, locs_1, density)
-        flow += car_flow(road_1, locs_1, length_1)
+
         if time % interval == 0:
             red_light_1 = not red_light_1
+        flow += car_flow(road_1, locs_1, length_1)
         dens += len(locs_1) / len(road_1)
         time += 1
     return flow / time, dens / time

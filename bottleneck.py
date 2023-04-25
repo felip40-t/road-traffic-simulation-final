@@ -22,11 +22,11 @@ start = time.time()
 
 max_speed = 5  # m s ^ -1
 initial_density_of_cars = 0.2  # cars per site
-road_length_1 = 200  # metres / number of sites
-road_length_2 = 400  # metres / number of sites
+road_length_1 = 500  # metres / number of sites
+road_length_2 = 1000  # metres / number of sites
 prob_of_deceleration = 0.3
-seconds = 1000  # seconds
-influx = False
+seconds = 5000  # seconds
+influx = True
 influx_rate = 0.2 # cars per second
 
 def translate_road(road, loc_cars):
@@ -39,6 +39,10 @@ def translate_road(road, loc_cars):
 def influx_gen(road, locs, influx_p):
     sample = rand.uniform(0,1, size=100)
     val = rand.choice(sample)
+    if len(locs) == 0:
+        speed = rand.randint(0,max_speed+1)
+        road[0] = speed
+        locs.insert(0,0)
     if (val < influx_p) and (locs[0] != 0):
         speed = rand.randint(0,max_speed+1)
         road[0] = speed
@@ -176,12 +180,9 @@ def iterating_switching(tot_time, density):
     road1, locs1 = generating_simple_road(road_length_1, density)
     road2, locs2 = generating_simple_road(road_length_2, density)
 
-    flow = []
-
+    flow = 0
+    densities = 0
     while time < tot_time:
-        if len(locs1) == 0 and len(locs2) == 0:
-            print("All cars have left the road.")
-            break
         distances_12 = compare_2_lanes(locs1, locs2, road_length_1, road_length_2)
         road1, road2, locs1, locs2 = switch(road1, road2, locs1, locs2, distances_12)
         road1 = accel_decel(road1, locs1, True)
@@ -192,21 +193,20 @@ def iterating_switching(tot_time, density):
         road1, locs1 = moving_cars(road1, locs1)
         road2, locs2 = moving_cars(road2, locs2)
         if influx:
-            road1, locs1 = influx_gen(road1, locs1, influx_rate)
-            road2, locs2 = influx_gen(road2, locs2, influx_rate)
-        flow.append(car_flow(road2, locs2))
+            road1, locs1 = influx_gen(road1, locs1, density)
+            road2, locs2 = influx_gen(road2, locs2, density)
+        if time > 0.3*tot_time:
+            flow += (car_flow(road2, locs2)+car_flow(road1, locs1))/2
+            densities += ((len(locs1)/len(road1))+len(locs2)/len(road2))/2
         time += 1
-    return time, flow
+    return densities/(0.7*time), flow/(0.7*time)
 
 def iterating_switching_world(tot_time, density):
     time2 = 0
     road1, locs1 = generating_simple_road(road_length_1, density)
     road2, locs2 = generating_simple_road(road_length_2, density)
-
     total_locs_1 = []
     total_locs_2 = []
-
-
     while time2 < tot_time:
         if len(locs1) == 0 and len(locs2) == 0:
             print("All cars have left the road.")
@@ -221,8 +221,8 @@ def iterating_switching_world(tot_time, density):
         road1, locs1 = moving_cars(road1, locs1)
         road2, locs2 = moving_cars(road2, locs2)
         if influx:
-            road1, locs1 = influx_gen(road1, locs1, influx_rate)
-            road2, locs2 = influx_gen(road2, locs2, influx_rate)
+            road1, locs1 = influx_gen(road1, locs1, density)
+            road2, locs2 = influx_gen(road2, locs2, density)
         if len(locs1) == 0:
             time1 = time2
         total_locs_2.extend([locs2])
@@ -231,36 +231,34 @@ def iterating_switching_world(tot_time, density):
     return time1, time2, total_locs_1, total_locs_2
 
 def write_flows(time):
-    densities = rand.uniform(low=0.01, high=1, size=10)
+    densities = rand.uniform(low=0.01, high=1, size=20)
     flow_rates = []
+    avg_densities = []
     for rho in densities:
-        flow_rate = iterating_switching(time, rho)
+        avg_density, flow_rate = iterating_switching(time, rho)
         flow_rates.append(flow_rate)
-    with open(".csv", 'a', encoding='utf-8') as data:
-        writer = csv.writer(data)
-        for index in enumerate(densities):
-            writer.writerow([densities[index[0]], flow_rates[index[0]]])
+        avg_densities.append(avg_density)
+        with open("flow_rate_bottleneck_1.csv", 'a', encoding='utf-8') as data:
+            writer = csv.writer(data)
+            writer.writerow([avg_density, flow_rate])
 
 def plot_flows():
-    time, flow = iterating_switching(seconds, initial_density_of_cars)
-    times = range(time)
-    """
-    data = np.genfromtxt(".csv", dtype='float',
-                         delimiter=',', skip_header=1)
+    data = np.genfromtxt("flow_rate_bottleneck_1.csv", dtype='float',
+                        delimiter=',', skip_header=1)
     densities = data[:, 0]
     flow_rates = data[:, 1]
-    """
-
-    fig = plt.figure(figsize=(14, 10))
+    fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
-    ax.set_title('Traffic flow vs Time \n (initial density = 0.3, influx rate = 0.2, probability of deceleration = 0.3, road 1 length = 400m , road 2 length = 800m)', fontsize=12)
-    ax.set_xlabel('Time (seconds)', fontsize=8)
-    ax.set_ylabel('Traffic flow (cars per time step)', fontsize=8)
-    #plt.xticks(np.arange(0, np.max(time), step=0.1*np.max(time)))
-    plt.scatter(times, flow, color='black', s=1)
+    ax.set_title('Traffic Flow for bottleneck in 2 lanes', fontsize=22)
+    ax.set_xlabel('Density (cars per metre)', fontsize=18)
+    ax.set_ylabel('Flow rate (cars per second)', fontsize=18)
+    plt.xticks(np.arange(0, 1.1, step=0.1),fontsize=16)
+    plt.ylim(0,0.5)
+    plt.yticks(np.arange(0,0.6,step=0.1),fontsize=16)
     plt.grid()
+    plt.scatter(densities, flow_rates, s=1, c='black', alpha=1)
     plt.show()
-    plt.savefig("Flow_graph_bottleneck_1_no_influx.pdf", dpi=400)
+    plt.savefig("bottleneck_flow_graph_1.pdf", dpi=400)
 
 def plot_world_lines():
 
@@ -284,7 +282,8 @@ def plot_world_lines():
     plt.savefig('World_lines_bottleneck_both.pdf', dpi=400)
 
 #plot_flows()
-plot_world_lines()
+write_flows(seconds)
+plot_flows()
 end = time.time()
 print((end - start)/60)
 
