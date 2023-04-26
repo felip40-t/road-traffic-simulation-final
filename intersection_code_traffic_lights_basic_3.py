@@ -225,7 +225,7 @@ def iterate_roads(tot_time, density, interval):
         if time > tot_time/10:
             flow += car_flow(road_before_1, locs_before_1, len(road_before_1))
         time += 1
-    return flow / (0.9*time)
+    return
 
 def write_flows(time):
     intervals = list(range(1,31))

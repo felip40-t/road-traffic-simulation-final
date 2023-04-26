@@ -227,49 +227,50 @@ def iterate_roads(tot_time, density, interval):
                 test_locs.append(loc)
 
         #flow += car_flow(test_road, test_locs, len(test_road))
-        dens.append(len(locs_1) / len(road_1))
+        dens.append(((len(locs_1) / len(road_1)) + (len(locs_2) / len(road_2)))/2)
         time += 1
-    times = list(range(1,time))
-    return times, dens
+    return time
 
 def write_flows(time):
-    densities = rand.uniform(low=0.01, high=1, size=10)
-    flow_rates = []
-    avg_densities = []
-    for rho in (densities):
-        for inter in range(1,11):
-            y, x = iterate_roads(seconds, 0.3, interval)
-        flow_rate, avg_density = iterate_roads(time, rho, 6)
-        flow_rates.append(flow_rate)
-        avg_densities.append(avg_density)
-        with open("flow_rate_intersection_4.csv", 'a', encoding='utf-8') as data:
-            writer = csv.writer(data)
-            writer.writerow([avg_density, flow_rate])
+    times = []
+    for inter in range(1,21):
+        t = iterate_roads(seconds, 0.3, interval)
+        times.append(t)
+    with open("flow_rate_intersection_5.csv", 'a', encoding='utf-8') as data:
+        writer = csv.writer(data)
+        writer.writerow(times)
 
 def plot_flows():
-    #data = np.genfromtxt("flow_rate_intersection_4.csv", dtype='float',
-     #                    delimiter=',', skip_header=1)
-    #time = data[:, 0]
-    #densities = data[:, 1]
-    #times = list(range(1,seconds))
+    data = np.genfromtxt("flow_rate_intersection_5.csv", dtype='float',
+                         delimiter=',', skip_header=1)
+    avg_times = []
+    for i in range(20):
+        column = data[:,i]
+        avg_t = np.average(column)
+        avg_times.append(avg_t)
+    intervals = list(range(1,21))
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
-    ax.set_title('Densities for one of the roads at an intersection', fontsize=18)
-    ax.set_xlabel('Time (seconds)', fontsize=18)
-    ax.set_ylabel('Density of cars (cars per site)', fontsize=18)
-    plt.xticks(fontsize=16)
-    #plt.ylim(0.15,0.35)
-    plt.yticks(fontsize=16)
+    ax.set_title('Management of traffic at an intersection', fontsize=20)
+    ax.set_ylabel('Average time taken to empty roads (seconds)', fontsize=18)
+    ax.set_xlabel('Interval of traffic light (seconds)', fontsize=18)
+    plt.xticks(np.arange(0, 24, step=4),fontsize=16)
+    plt.ylim(600,1600)
+    plt.yticks(np.arange(600,1800,step=200),fontsize=16)
     plt.grid()
+    plt.scatter(intervals, avg_times, s=5, c='blue')
+    """
     colours = ['red', 'blue', 'black', 'green', 'orange', 'yellow', 'purple', 'cyan', 'magenta', 'dodgerblue']
-    for inter in range(11,21):
+    for inter in range(1,11):
         x, y = iterate_roads(seconds, 0.3, inter)
-        plt.scatter(x, y, s=1, c=colours[inter-11], alpha=1, label=inter)
+        plt.scatter(x, y, s=1, c=colours[inter-1], alpha=1, label=inter)
     plt.legend(loc='best', title='interval times for traffic lights (sec)', markerscale=4)
+    """
+    plt.legend('Length of roads = 1000 m ')
     plt.show()
-    plt.savefig("intersection_test7.pdf", dpi=400)
-
-#write_flows(seconds)
+    plt.savefig("intersection_times1.pdf", dpi=400)
+for i in range(10):
+    write_flows(seconds)
 plot_flows()
 
 end = time.time()

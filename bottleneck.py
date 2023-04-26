@@ -196,8 +196,8 @@ def iterating_switching(tot_time, density):
             road1, locs1 = influx_gen(road1, locs1, density)
             road2, locs2 = influx_gen(road2, locs2, density)
         if time > 0.3*tot_time:
-            flow += (car_flow(road2, locs2)+car_flow(road1, locs1))/2
-            densities += ((len(locs1)/len(road1))+len(locs2)/len(road2))/2
+            flow += (car_flow(road1, locs1))
+            densities += len(locs1)/len(road1)
         time += 1
     return densities/(0.7*time), flow/(0.7*time)
 
@@ -238,18 +238,18 @@ def write_flows(time):
         avg_density, flow_rate = iterating_switching(time, rho)
         flow_rates.append(flow_rate)
         avg_densities.append(avg_density)
-        with open("flow_rate_bottleneck_1.csv", 'a', encoding='utf-8') as data:
+        with open("flow_rate_bottleneck_2.csv", 'a', encoding='utf-8') as data:
             writer = csv.writer(data)
             writer.writerow([avg_density, flow_rate])
 
 def plot_flows():
-    data = np.genfromtxt("flow_rate_bottleneck_1.csv", dtype='float',
+    data = np.genfromtxt("flow_rate_bottleneck_2.csv", dtype='float',
                         delimiter=',', skip_header=1)
     densities = data[:, 0]
     flow_rates = data[:, 1]
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
-    ax.set_title('Traffic Flow for bottleneck in 2 lanes', fontsize=22)
+    ax.set_title('Traffic Flow for bottleneck in obstructed lane', fontsize=22)
     ax.set_xlabel('Density (cars per metre)', fontsize=18)
     ax.set_ylabel('Flow rate (cars per second)', fontsize=18)
     plt.xticks(np.arange(0, 1.1, step=0.1),fontsize=16)
@@ -258,7 +258,7 @@ def plot_flows():
     plt.grid()
     plt.scatter(densities, flow_rates, s=1, c='black', alpha=1)
     plt.show()
-    plt.savefig("bottleneck_flow_graph_1.pdf", dpi=400)
+    plt.savefig("bottleneck_flow_graph_2.pdf", dpi=400)
 
 def plot_world_lines():
 
