@@ -190,7 +190,7 @@ def iterate_roads(tot_time, density, interval):
     time = 1
     red_light_1 = True
     flow = 0
-    dens = 0
+    dens = []
     # repeating whole process for certain amount of iterations
     while time < tot_time:
         red_light_2 = not red_light_1
@@ -222,7 +222,8 @@ def iterate_roads(tot_time, density, interval):
         for val in locs_1:
             if val < int_index_1:
                 locs_before_1.append(val)
-        if time > tot_time/10:
+        if time > 0.3*tot_time:
+            dens.append((len(locs_1)/len(road)))
             flow += car_flow(road_before_1, locs_before_1, len(road_before_1))
         time += 1
     return
