@@ -254,11 +254,11 @@ def plot_flows():
     ax.set_title('Comparing traffic light interval times', fontsize=20)
     ax.set_ylabel(r'Average emptying time (hours)', fontsize=18)
     ax.set_xlabel('Interval of traffic light (seconds)', fontsize=18)
-    plt.xticks(np.arange(0, 24, step=4),fontsize=16)
+    plt.xticks(np.arange(0, 22, step=2),fontsize=16)
     plt.ylim(1,2)
-    plt.yticks(np.arange(1,2.25,step=0.25),fontsize=16)
+    plt.yticks(np.arange(1,2.25, step=0.25),fontsize=16)
     plt.grid()
-    plt.scatter(intervals, avg_times, s=5, c='blue', label='4000')
+    plt.scatter(intervals, avg_times, s=10, c='black', label='4000')
     """
     colours = ['red', 'blue', 'black', 'green', 'orange', 'yellow', 'purple', 'cyan', 'magenta', 'dodgerblue']
     for inter in range(1,11):

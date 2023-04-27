@@ -16,14 +16,14 @@ start = time.time()
 
 max_speed = 5  # metres per second
 #bus_density = 0.15 # busses per metre
-road_length = 2000  # metres
+road_length = 50  # metres
 prob_of_deceleration = 0.3
-seconds = 5000 # seconds
+seconds = 50 # seconds
 influx = True
 #influx_bus = 0.5 # busses per second
-max_cap_bus = 40
-influx_passengers = 0.05 # per second
-stop_frequency = 0.005 # stops per metre
+max_cap_bus = 10
+influx_passengers = 0.1 # per second
+stop_frequency = 0.05 # stops per metre
 
 def translate_road(road, locs, stops, stop_caps):
     final_road = ['.' for i in range(len(road))]
@@ -243,26 +243,16 @@ def new_process(road, locs, stops, bus_caps, stop_caps, passengers):
             road = accel_decel(road, locs, bus[1])
             road = random_decel(road, bus[1])
         elif (location + 1) in stops and speed == 0:
-            if passengers[bus_index] == (0,1) or passengers[bus_index] == (1,0):
-                road = accel_decel(road, locs, bus[1])
-                road = random_decel(road, bus[1])
-                if passengers[bus[0]] == (0,1):
-                    stop_caps[stop_index] -= 1
-                    bus_caps[bus[0]] += 1
-                if passengers[bus[0]] == (1,0):
-                    bus_caps[bus[0]] -= 1
-                passengers[bus_index] = (0,0)
-            else:
-                pass_off = passengers[bus[0]][0]
-                pass_on = passengers[bus[0]][1]
-                if pass_off > 0:
-                    pass_off -= 1
-                    bus_caps[bus[0]] -= 1
-                elif pass_off == 0 and pass_on > 0:
-                    pass_on -= 1
-                    bus_caps[bus[0]] += 1
-                    stop_caps[stop_index] -= 1
-                passengers[bus[0]] = (pass_off, pass_on)
+              pass_off = passengers[bus[0]][0]
+              pass_on = passengers[bus[0]][1]
+              if pass_off > 0:
+                  pass_off -= 1
+                  bus_caps[bus[0]] -= 1
+              elif pass_off == 0 and pass_on > 0:
+                  pass_on -= 1
+                  bus_caps[bus[0]] += 1
+                  stop_caps[stop_index] -= 1
+              passengers[bus[0]] = (pass_off, pass_on)
         else:
             road = accel_decel(road, locs, bus[1])
             road = random_decel(road, bus[1])
@@ -306,15 +296,12 @@ def iterate_road(tot_time, rho_bus):
     while t < tot_time:
         road, bus_caps, stop_caps, passengers = new_process(road, locs, stops, bus_caps, stop_caps, passengers)
         passengers = adjust_buses(locs, stops, bus_caps, stop_caps, passengers)
-        """
-        print(passengers)
         for b_cap in enumerate(bus_caps):
             index = b_cap[0]
             cap = b_cap[1]
             print("bus {0} occupancy = {1}".format(index+1, cap))
         translate_road(road, locs, stops, stop_caps)
         print("\n")
-        """
         road, locs, bus_caps, passengers = moving_bus(road, locs, bus_caps, passengers)
         passengers = process_pass_stop(road, locs, stops, bus_caps, stop_caps, passengers)
         if influx:
@@ -352,8 +339,10 @@ def plot_flows():
     plt.show()
     plt.savefig("Flow_graph_buses_1.pdf", dpi=400)
 
-write_flows(seconds)
-plot_flows()
+#write_flows(seconds)
+#plot_flows()
+
+iterate_road(seconds, 0.1)
 
 end = time.time()
 print((end - start)/60)
