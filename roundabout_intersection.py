@@ -15,16 +15,16 @@ start = time.time()
 
 
 max_speed = 5  # m s ^ -1
-initial_density = 0.10  # cars per site
-round_length = 40 # metres
-road_length = 40 # meters
+#initial_density = 0.3  # cars per site
+round_length = 50 # metres
+road_length = 200 # meters
 prob_of_deceleration = 0.3
 #influx = 0.5 # cars per second
-seconds = 50  # seconds
-entry_point_1 = 5
-entry_point_2 = 15
-exit_point_1 = 25
-exit_point_2 = 35
+seconds = 1000  # seconds
+entry_point_1 = 12
+entry_point_2 = 24
+exit_point_1 = 36
+exit_point_2 = 48
 sample = rand.uniform(0, 1, size=100)
 
 
@@ -140,15 +140,20 @@ def accel_decel_round(road, loc_round, locs, exits):
             rand_num = rand.choice(sample)
             if rand_num < prob_of_deceleration:
                 road[location] = road[location] - 1
-        for _exit_ in enumerate(exits):
-            exit_loc = _exit_[1]
-            i = _exit_[0]
-            if location < exit_loc and speed >= exit_loc - location:
+        if location < exits[0] and location < exits[1]:
+            if speed > exits[0] - location:
                 choices[index] = rand.randint(0,2)
                 if choices[index] == 1:
-                    road_locs = locs[i]
-                    next_car = road_locs[0]
-                    distance = exit_loc - location + next_car
+                    next_car = locs[0][0]
+                    distance = exits[0] - location + next_car
+                    if speed >= distance:
+                        road[location] = distance - 1
+        elif location >= exits[0] and location < exits[1]:
+            if speed > exits[1] - location:
+                choices[index] = rand.randint(0,2)
+                if choices[index] == 1:
+                    next_car = locs[1][0]
+                    distance = exits[1] - location + next_car
                     if speed >= distance:
                         road[location] = distance - 1
     return road, choices
@@ -182,7 +187,6 @@ def moving_cars_linear(road, locs, round_road, locs_round, entry_point):
             index = find_next_car(new_loc, locs_round)
             round_road[new_loc] = speed
             locs_round.insert(index, new_loc)
-            print("new car")
         else:
             new_cars.append(new_location)
             road[new_location] = speed
@@ -198,14 +202,14 @@ def moving_cars_round(road, locs, exit_roads, exit_locs, exits, choices):
         speed = int(road[location])
         new_location = location + speed
         if choices[index] == 1:
-            for info in enumerate(exits):
-                exit_loc = info[1]
-                exit_i = info[0]
-                if location < exit_loc:
-                    new_loc = new_location - exit_loc
-                    exit_locs[exit_i].insert(0,new_loc)
-                    exit_roads[exit_i][new_loc] = speed
-                    print("exit")
+            if location < exits[0] and location < exits[1]:
+                new_loc = new_location - exits[0]
+                exit_locs[0].insert(0,new_loc)
+                exit_roads[0][new_loc] = speed
+            elif location >= exits[0] and location < exits[1]:
+                new_loc = new_location - exits[1]
+                exit_locs[1].insert(0,new_loc)
+                exit_roads[1][new_loc] = speed
         else:
             if new_location >= round_length:
                 new_location -= round_length
@@ -250,11 +254,11 @@ def iterate_roads(total_time, density):
     flow = 0
     densit = 0
     while time < total_time:
-        if len(locs1) == 0 and len(locs2) == 0 and len(locs_round) == 0 and len(exit_locs1) == 0 and len(exit_locs2):
+        if len(locs1) == 0 and len(locs2) == 0 and len(locs_round) == 0 and len(exit_locs1) == 0 and len(exit_locs2) == 0:
             break
         exit_road1 = accel_decel_exits(exit_road1, exit_locs1)
         exit_road2 = accel_decel_exits(exit_road2, exit_locs2)
-        roundabout, choices = accel_decel_round(roundabout, locs_round, [exit_locs1], [exit_point_1])
+        roundabout, choices = accel_decel_round(roundabout, locs_round, [exit_locs1, exit_locs2], [exit_point_1, exit_point_2])
         road1 = accel_decel_linear(road1, locs1, roundabout, locs_round, entry_point_1)
         road2 = accel_decel_linear(road2, locs2, roundabout, locs_round, entry_point_2)
 
@@ -282,40 +286,36 @@ def iterate_roads(total_time, density):
         #road2, locs2 = influx_gen(road2, locs2, density)
         roads = [road1, road2, exit_road1, exit_road2, roundabout]
         locs = [locs1, locs2, exit_locs1, exit_locs2, locs_round]
-        for r in enumerate(roads):
-            flow += car_flow(r[1], locs[r[0]], len(r[1]))
-            densit += len(locs[r[0]]) / len(r[1])
+        #for r in enumerate(roads):
+            #flow += car_flow(r[1], locs[r[0]], len(r[1]))
+            #densit += len(locs[r[0]]) / len(r[1])
         time += 1
     return time
 
 def write_flows(time):
-    densities = rand.uniform(low=0.01,high=1,size=10)
+    densities = rand.uniform(low=0.01,high=1,size=30)
     times = []
     for rho in densities:
-        t = iterate_roads(seconds, rho, 5)
-        with open("flow_rate_intersection_7.csv", 'a', encoding='utf-8') as data:
+        t = iterate_roads(seconds, rho)
+        with open("flow_rate_roundabout_1.csv", 'a', encoding='utf-8') as data:
             writer = csv.writer(data)
             writer.writerow(rho, t)
 
 def plot_flows():
-    data = np.genfromtxt("flow_rate_intersection_7.csv", dtype='float',
+    data = np.genfromtxt("flow_rate_roundabout_1.csv", dtype='float',
                          delimiter=',', skip_header=1)
     densities = data[:,0]
     times = data[:,1]
-    for i in range(5):
-        column = data[:,i]
-        avg_t = np.average(column)
-        avg_times.append(avg_t)
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
     ax.set_title('Management of traffic at an intersection', fontsize=20)
     ax.set_ylabel('Average time taken to empty roads (seconds)', fontsize=18)
-    ax.set_xlabel('Interval of traffic light (seconds)', fontsize=18)
-    plt.xticks(np.arange(0, 35, step=5),fontsize=16)
-    plt.ylim(0,8000)
-    plt.yticks(np.arange(0,9000,step=1000),fontsize=16)
+    ax.set_xlabel('Initial density (cars per metre)', fontsize=18)
+    plt.xticks(np.arange(0, 1.2, step=0.2),fontsize=16)
+    plt.ylim(0,500)
+    plt.yticks(np.arange(0,500,step=100),fontsize=16)
     plt.grid()
-    plt.scatter(intervals, avg_times, s=5, c='blue', label='Length = 5000m')
+    plt.scatter(densities, times, s=3, c='blue', label='Length = 200m')
     """
     colours = ['red', 'blue', 'black', 'green', 'orange', 'yellow', 'purple', 'cyan', 'magenta', 'dodgerblue']
     for inter in range(1,11):
@@ -325,9 +325,12 @@ def plot_flows():
     """
     plt.legend(title='Length of roads')
     plt.show()
-    plt.savefig("intersection_times2.pdf", dpi=400)
+    plt.savefig("roundabout_times1.pdf", dpi=400)
 
+#write_flows(seconds)
+#plot_flows()
 
+iterate_roads(seconds, 0.95)
 
 end = time.time()
 print((end - start)/60)

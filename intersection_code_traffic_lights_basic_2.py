@@ -246,19 +246,19 @@ def plot_flows():
     avg_times = []
     for i in range(20):
         column = data[:,i]
-        avg_t = np.average(column)
+        avg_t = np.average(column)/ 3600
         avg_times.append(avg_t)
     intervals = list(range(1,21))
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
-    ax.set_title('Management of traffic at an intersection', fontsize=20)
-    ax.set_ylabel('Average time taken to empty roads (seconds)', fontsize=18)
+    ax.set_title('Comparing traffic light interval times', fontsize=20)
+    ax.set_ylabel(r'Average emptying time (hours)', fontsize=18)
     ax.set_xlabel('Interval of traffic light (seconds)', fontsize=18)
     plt.xticks(np.arange(0, 24, step=4),fontsize=16)
-    plt.ylim(0,10000)
-    plt.yticks(np.arange(0,11000,step=1000),fontsize=16)
+    plt.ylim(1,2)
+    plt.yticks(np.arange(1,2.25,step=0.25),fontsize=16)
     plt.grid()
-    plt.scatter(intervals, avg_times, s=5, c='blue', label='Length = 5000m')
+    plt.scatter(intervals, avg_times, s=5, c='blue', label='4000')
     """
     colours = ['red', 'blue', 'black', 'green', 'orange', 'yellow', 'purple', 'cyan', 'magenta', 'dodgerblue']
     for inter in range(1,11):
@@ -266,7 +266,7 @@ def plot_flows():
         plt.scatter(x, y, s=1, c=colours[inter-1], alpha=1, label=inter)
     plt.legend(loc='best', title='interval times for traffic lights (sec)', markerscale=4)
     """
-    plt.legend(title='Length of roads')
+    plt.legend(title='Length of roads (m)')
     plt.show()
     plt.savefig("intersection_times2.pdf", dpi=400)
 

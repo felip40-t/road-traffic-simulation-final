@@ -18,10 +18,17 @@ import matplotlib.pyplot as plt
 
 max_speed = 5  # m s ^ -1
 initial_density = 0.2  # cars per site
-road_length = 800  # metres / number of sites
+road_length = 30  # metres / number of sites
 prob_of_deceleration = 0.25
-seconds = 400  # seconds
+seconds = 20  # seconds
 roundabout = False
+
+def translate_road(road, loc_cars):
+    final_road = ['.' for i in range(len(road))]
+    locs = list(map(int, loc_cars))
+    for index in locs:
+        final_road[index] = int(road[index])
+    print(*final_road, sep='  ')
 
 def generating_simple_road(density):
     num_cars = int(np.floor(road_length * density))
@@ -93,10 +100,10 @@ def iterate_road_plot_worldlines(tot_time, density):
             break
 
         road = accel_decel(road, car_indices)
+        translate_road(road, car_indices)
         road, car_indices = moving_cars(road, car_indices)
         total_indices.extend([car_indices])
         time += 1
-    return total_indices, time
 
 
 def plot_world_lines(locs, time):
@@ -117,7 +124,7 @@ def plot_world_lines(locs, time):
 
 def main(time):
 
-    locs, time = iterate_road_plot_worldlines(time, initial_density)
-    plot_world_lines(locs, time)
+    iterate_road_plot_worldlines(time, initial_density)
+    #plot_world_lines(locs, time)
 
 main(seconds)
