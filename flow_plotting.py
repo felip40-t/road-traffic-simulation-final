@@ -139,13 +139,13 @@ def plot_flows():
     flow_rates = data[:, 1]
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
-    ax.set_title('Traffic Flow for 1 lane', fontsize=22)
-    ax.set_xlabel('Density (cars per site)', fontsize=18)
-    ax.set_ylabel('Average Flow (cars per time step)', fontsize=18)
+    ax.set_title('Traffic Flow for 1 Lane', fontsize=22)
+    ax.set_xlabel('Density (cars per metre)', fontsize=18)
+    ax.set_ylabel('Average Rate of Flow (cars per second)', fontsize=18)
     plt.xticks(np.arange(0, 1.1, step=0.1), fontsize=14)
     plt.yticks(fontsize=14)
     plt.scatter(densities, flow_rates, color='black', s=1)
-
+    plt.legend(title='Road Length = 2000 m\nDeceleration Probability = 0.4\nTotal Time = 15,000 s', title_fontsize=16)
     plt.grid()
     plt.show()
     plt.savefig("Flow_graph_single_lane_final.pdf", dpi=400)

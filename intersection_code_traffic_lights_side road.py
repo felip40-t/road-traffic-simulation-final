@@ -10,12 +10,12 @@ import numpy.random as rand
 
 max_speed = 5  # m s ^ -1
 initial_density = 0.2  # cars per site
-length_main = 40  # metres / number of sites
-length_side = 30
+length_main = 30  # metres / number of sites
+length_side = 15
 prob_of_deceleration = 0.3
 influx = 0.5 # cars / second
-seconds = 20  # seconds
-int_index = 20
+seconds = 30  # seconds
+int_index = 15
 
 def translate_road(road, locs):
     final_road = ['.' for i in range(len(road))]
@@ -211,6 +211,6 @@ def iterate_roads(tot_time, density, x):
         time += 1
     return (- flow) / time
 
-def optimize(total_time, i_rho):
+t = iterate_roads(seconds, 0.2, 6)
 
 

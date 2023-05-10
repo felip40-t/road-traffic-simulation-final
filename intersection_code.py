@@ -10,13 +10,13 @@ import numpy.random as rand
 
 max_speed = 5  # m s ^ -1
 initial_density = 0.2  # cars per site
-length_main = 30  # metres / number of sites
+length_main = 20  # metres / number of sites
 length_side = 10
 prob_of_deceleration = 0.2
 politeness = 1 # metres
 influx = 0.4 # cars / second
 seconds = 15  # seconds
-int_index = 20
+int_index = 10
 
 def translate_road(road, locs):
     final_road = ['.' for i in range(len(road))]
