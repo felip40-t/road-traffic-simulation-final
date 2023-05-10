@@ -16,14 +16,14 @@ start = time.time()
 
 max_speed = 5  # metres per second
 #bus_density = 0.15 # busses per metre
-road_length = 50  # metres
+road_length = 40  # metres
 prob_of_deceleration = 0.3
 seconds = 50 # seconds
 influx = True
 #influx_bus = 0.5 # busses per second
 max_cap_bus = 10
 influx_passengers = 0.1 # per second
-stop_frequency = 0.05 # stops per metre
+stop_frequency = 0.1 # stops per metre
 
 def translate_road(road, locs, stops, stop_caps):
     final_road = ['.' for i in range(len(road))]

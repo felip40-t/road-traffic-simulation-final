@@ -15,13 +15,13 @@ start = time.time()
 
 max_speed = 5  # m s ^ -1
 #initial_density = 0.2  # cars per site
-length_1 = 4000 # metres / number of sites
-length_2 = 4000
+length_1 = 1000 # metres / number of sites
+length_2 = 1000
 prob_of_deceleration = 0.3
 #influx = 0.3 # cars / second
-seconds = 10000  # seconds
-int_index_1 = 2000
-int_index_2 = 2000
+seconds = 50000  # seconds
+int_index_1 = 500
+int_index_2 = 500
 #interval = 6 # seconds
 
 def translate_road(road, locs, red):
@@ -232,33 +232,35 @@ def iterate_roads(tot_time, density, interval):
     return time
 
 def write_flows(time):
-    times = []
-    for inter in range(1,21):
-        t = iterate_roads(seconds, 0.3, inter)
-        times.append(t)
-    with open("flow_rate_intersection_6.csv", 'a', encoding='utf-8') as data:
-        writer = csv.writer(data)
-        writer.writerow(times)
+    densities = rand.uniform(low=0.01, high=1, size=50)
+    for rho in densities:
+        t = iterate_roads(seconds, rho, 6)
+        with open("intersections_time_2.csv", 'a', encoding='utf-8') as data:
+            writer = csv.writer(data)
+            writer.writerow([rho, t])
 
 def plot_flows():
-    data = np.genfromtxt("flow_rate_intersection_6.csv", dtype='float',
+    data = np.genfromtxt("intersections_time_2.csv", dtype='float',
                          delimiter=',', skip_header=1)
-    avg_times = []
-    for i in range(20):
-        column = data[:,i]
-        avg_t = np.average(column)/ 3600
-        avg_times.append(avg_t)
-    intervals = list(range(1,21))
+    densities = data[:,0]
+    avg_times = data[:,1]/3600
+
+    coeffs = np.polyfit(densities, avg_times, 3)
+    a,b,c,d = coeffs
+    x = np.linspace(0,1, 100)
+    y = a*x**3 + b*x**2 + c*x + d
+
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
-    ax.set_title('Comparing traffic light interval times', fontsize=20)
+    ax.set_title('Comparing efficiency of traffic lights vs roundabout', fontsize=20)
     ax.set_ylabel(r'Average emptying time (hours)', fontsize=18)
     ax.set_xlabel('Interval of traffic light (seconds)', fontsize=18)
-    plt.xticks(np.arange(0, 22, step=2),fontsize=16)
-    plt.ylim(1,2)
-    plt.yticks(np.arange(1,2.25, step=0.25),fontsize=16)
+    plt.xticks(np.arange(0, 1.2, step=0.2),fontsize=16)
+    plt.ylim(0,5)
+    plt.yticks(np.arange(0,5.5, step=0.5),fontsize=16)
     plt.grid()
-    plt.scatter(intervals, avg_times, s=10, c='black', label='4000')
+    plt.scatter(densities, avg_times, s=5, c='black', label='Averaged raw data')
+    plt.plot(x, y, linewidth=1, c='blue', label='3rd order polynomial fit')
     """
     colours = ['red', 'blue', 'black', 'green', 'orange', 'yellow', 'purple', 'cyan', 'magenta', 'dodgerblue']
     for inter in range(1,11):
@@ -266,9 +268,9 @@ def plot_flows():
         plt.scatter(x, y, s=1, c=colours[inter-1], alpha=1, label=inter)
     plt.legend(loc='best', title='interval times for traffic lights (sec)', markerscale=4)
     """
-    plt.legend(title='Length of roads (m)')
+    plt.legend(title='       Road Length = 2000 m \nDeceleration probability = 0.3\n             Interval = 6 s', fontsize=16, title_fontsize=16)
     plt.show()
-    plt.savefig("intersection_times2.pdf", dpi=400)
+    plt.savefig("intersection_times6.pdf", dpi=400)
 
 write_flows(seconds)
 plot_flows()

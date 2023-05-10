@@ -18,9 +18,9 @@ import matplotlib.pyplot as plt
 
 max_speed = 5  # m s ^ -1
 initial_density = 0.2  # cars per site
-road_length = 30  # metres / number of sites
+road_length = 800  # metres / number of sites
 prob_of_deceleration = 0.25
-seconds = 20  # seconds
+seconds = 500  # seconds
 roundabout = False
 
 def translate_road(road, loc_cars):
@@ -100,16 +100,18 @@ def iterate_road_plot_worldlines(tot_time, density):
             break
 
         road = accel_decel(road, car_indices)
-        translate_road(road, car_indices)
+
         road, car_indices = moving_cars(road, car_indices)
         total_indices.extend([car_indices])
         time += 1
+    return total_indices, time
 
 
-def plot_world_lines(locs, time):
+def plot_world_lines():
+    locs, time = iterate_road_plot_worldlines(seconds, initial_density)
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111)
-    ax.set_title('World lines for cars', fontsize=20)
+    ax.set_title('World Lines for Cars - Linear Road', fontsize=20)
     ax.set_xlabel('Space (metres)', fontsize=18)
     ax.set_ylabel('Time (seconds)', fontsize=18)
     plt.xticks(fontsize=16)
@@ -118,13 +120,12 @@ def plot_world_lines(locs, time):
     for i in range(time):
         xvals = locs[i]
         yvals = np.linspace(i, i, len(xvals))
-        plt.scatter(xvals, yvals, color='black', s=0.3)
+        plt.scatter(xvals, yvals, color='black', s=0.2)
+    plt.legend(title='          Road Length = 800 m\n   Deceleration probability = 0.25\nInitial Density = 0.2 cars per metre ', title_fontsize=14)
     plt.show()
-    plt.savefig('World_lines_linear_lane_final6.pdf', dpi=100)
+    plt.savefig('World_lines_linear_lane_final6.pdf', dpi=200)
 
 def main(time):
-
-    iterate_road_plot_worldlines(time, initial_density)
-    #plot_world_lines(locs, time)
+    plot_world_lines()
 
 main(seconds)
