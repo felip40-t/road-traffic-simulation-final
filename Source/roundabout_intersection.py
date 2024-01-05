@@ -16,15 +16,15 @@ start = time.time()
 
 max_speed = 5  # m s ^ -1
 #initial_density = 0.3  # cars per site
-round_length = 40 # metres
-road_length = 40 # meters
+round_length = 30 # metres
+road_length = 30 # meters
 prob_of_deceleration = 0.3
 #influx = 0.5 # cars per second
 seconds = 1000  # seconds
-entry_point_1 = 8
-entry_point_2 = 16
-exit_point_1 = 24
-exit_point_2 = 32
+entry_point_1 = 6
+entry_point_2 = 12
+exit_point_1 = 18
+exit_point_2 = 24
 sample = rand.uniform(0, 1, size=100)
 
 
@@ -153,7 +153,7 @@ def accel_decel_round(road, loc_round, locs, exits):
                     else:
                         next_car = locs[0][0]
                     distance = exits[0] - location + next_car
-                    print(distance)
+
                     if speed >= distance:
                         road[location] = distance - 1
         elif location > exits[0] and location < exits[1] and location == loc_before_exit_2:
@@ -165,7 +165,6 @@ def accel_decel_round(road, loc_round, locs, exits):
                     else:
                         next_car = locs[1][0]
                     distance = exits[1] - location + next_car
-                    print(distance)
                     if speed >= distance:
                         road[location] = distance - 1
     return road, choices
@@ -268,10 +267,10 @@ def iterate_roads(total_time, density):
     exit_road2, exit_locs2 = generating_simple_road(road_length, density)
 
     stop_road = [' ' for i in range(len(roundabout))]
-    stop_road[entry_point_1] = 'e'
-    stop_road[entry_point_2] = 'e'
-    stop_road[exit_point_1] = 'e'
-    stop_road[exit_point_2] = 'e'
+    stop_road[entry_point_1] = 'o'
+    stop_road[entry_point_2] = 'o'
+    stop_road[exit_point_1] = 'x'
+    stop_road[exit_point_2] = 'x'
 
     flow = 0
     densit = 0
@@ -363,6 +362,5 @@ def plot_flows():
 
 t = iterate_roads(300, 0.2)
 print(t)
-
 end = time.time()
 #print((end - start)/60)
